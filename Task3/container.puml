@@ -1,35 +1,37 @@
-@startuml
+@startuml PropDevelopment Smart Home Containers
 !include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
 
-System_Boundary(prop, "PropDevelopment") {
+title Container diagram for PropDevelopment Smart Home Platform
 
-  Container(tenantApp,   "Tenant Mobile App", "Flutter",
-           "UI: ЖКУ, заявки, Smart-Home")
-  Container(tenantCore,  "Tenant-Core API", "Spring Boot",
-           "Бизнес-логика приложений собственника")
-  ContainerDb(tenantDB,  "tenant-core-db", "PostgreSQL",
-           "Данные собственников, устройств, заявок")
+Person(resident, "Владелец недвижимости", "Управляет системой умного дома через мобильное приложение")
 
-  'Новый контейнер'
-  Container(smartGateway, "Smart-Home Gateway", "Spring Boot + Keycloak Adapter",
-           "Адаптер для Smart-Home Platform.\nМаршрутизация, кеш устройств, запись событий.")
+System_Boundary(prop_development, "PropDevelopment Platform") {
+    Container(mobile_app, "Мобильное приложение PropDevelopment", "React Native/TypeScript", "Кроссплатформенное мобильное приложение")
 
-  ContainerDb(deviceCache, "smart-home-cache", "Redis",
-           "Текущие состояния устройств")
+    Container(smart_home_service, "Smart Home Service", "Java, Spring Boot", "Центральный сервис управления умным домом")
 
-  Container(analytics,  "DWH / BI", "Greenplum",
-           "Сырые и агрегированные данные устройств (CDC)")
+    Container(barrier_service, "Barrier Service", "Java, Spring Boot", "Микросервис управления шлагбаумом")
+    Container(barrier_service_db, "Barrier DB", "PostgreSQL", "База данных конфигураций шлагбаума")
+
+    Container(intercom_service, "Intercom Service", "Java, Spring Boot", "Микросервис управления домофоном")
+    Container(intercom_service_db, "Intercom DB", "PostgreSQL", "База данных настроек домофона")
 }
 
-System_Ext(smartPlatform, "Smart-Home Platform",
-           "REST API, MQTT",
-           "Домофон, шлагбаум (IoT)")
+System_Ext(partner_service, "Сервис партнера", "Внешний API для IoT устройств")
+System_Ext(smart_intercom, "Умный домофон", "Видеодомофон с функцией распознавания лиц и удаленного открытия")
+System_Ext(smart_barrier, "Умный шлагбаум", "Автоматический шлагбаум с распознаванием номерных знаков")
 
-Rel_L(tenantApp, tenantCore,  "REST + JWT")
-Rel_R(tenantCore, smartGateway, "REST + mTLS / OAuth 2 CC")
-Rel_D(smartGateway, smartPlatform, "REST / MQTT • JSON • TLS")
-Rel(smartGateway, deviceCache, "Cache (SET/GET)", "Redis TCP")
-Rel_Back(tenantCore, tenantDB, "JDBC")
-Rel_Back(smartGateway, analytics, "CDC → Kafka → DWH")
+Rel(resident, mobile_app, "Взаимодействие", "REST API/HTTPS")
+Rel(mobile_app, smart_home_service, "Отправка команд", "JSON/HTTPS")
+
+Rel(smart_home_service, partner_service, "Интеграция", "REST API/OAuth2.0")
+Rel(smart_home_service, intercom_service, "Управление домофоном", "REST API")
+Rel(smart_home_service, barrier_service, "Управление шлагбаумом", "REST API")
+
+Rel(intercom_service, intercom_service_db, "Хранение настроек", "SQL/JDBC")
+Rel(barrier_service, barrier_service_db, "Хранение конфигураций", "SQL/JDBC")
+
+Rel(partner_service, smart_intercom, "Управление", "IoT Protocol")
+Rel(partner_service, smart_barrier, "Управление", "IoT Protocol")
 
 @enduml

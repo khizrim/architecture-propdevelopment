@@ -1,36 +1,22 @@
-@startuml
-!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
-LAYOUT_WITH_LEGEND()
+@startuml PropDevelopment Smart Home Context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
 
-Person(owner,       "Собственник", "Управляет жильём через мобильное приложение")
-Person(partnerOps,  "Smart-Home Ops", "Операторы партнёра (служба поддержки)")
+title Context diagram for PropDevelopment Smart Home Platform
 
-System_Boundary(prop, "PropDevelopment") {
+Person(resident, "Владелец недвижимости", "Управляет системой умного дома через мобильное приложение")
 
-       System(tenantApp,          "Tenant Mobile App", "iOS / Android",
-       "Оплата ЖКУ, заявки, «Умный дом»")
-       System_Ext(tenantCore,     "Tenant-Core API",   "Spring Boot",
-       "Бэкенд мобильного приложения")
+System(mobile_app, "Mobile app PropDevelopment", "Приложение для управления умным домом")
+System(prop_system, "PropDevelopment server", "Центральная платформа управления")
 
-       'Новый интеграционный слой'
-       System( smartGateway,
-       "Smart-Home Gateway",
-       "Spring Boot",
-       "Сервис-адаптер PropDevelopment ↔ Smart-Home Platform")
-}
+System_Ext(smart_intercom, "Умный домофон", "Видеодомофон с функцией распознавания лиц и удаленного открытия")
+System_Ext(smart_barrier, "Умный шлагбаум", "Автоматический шлагбаум с распознаванием номерных знаков")
+System_Ext(partner_service, "Сервис партнера", "Внешний API для интеграции с IoT устройствами")
 
-System_Ext(smartPlatform,
-"Smart-Home Platform",
-"Облачная IoT-платформа партнёра",
-"Домофон + Шлагбаум + другие IoT-сервисы")
+Rel(resident, mobile_app, "Взаимодействие", "REST API/HTTPS")
 
-Rel(owner, tenantApp, "Использует", "TLS / HTTPS")
-Rel(tenantApp, tenantCore, "REST / JSON", "JWT")
-Rel(tenantCore, smartGateway, "REST / gRPC", "mTLS + OAuth 2 Client Creds")
-Rel(smartGateway, smartPlatform,
-"REST / MQTT over TLS  • OAuth 2 / JWT",
-"Команды, Web-hooks")
-
-Rel(partnerOps, smartPlatform, "Мониторинг / управление", "VPN")
+Rel(mobile_app, prop_system, "Отправка команд", "JSON/HTTPS")
+Rel(prop_system, partner_service, "Интеграция", "REST API/OAuth2.0")
+Rel(partner_service, smart_intercom, "Управление", "IoT Protocol")
+Rel(partner_service, smart_barrier, "Управление", "IoT Protocol")
 
 @enduml
