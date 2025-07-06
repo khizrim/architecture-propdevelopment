@@ -1,0 +1,22 @@
+@startuml PropDevelopment Smart Home Context
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+
+title Context diagram for PropDevelopment Smart Home Platform
+
+Person(resident, "Владелец недвижимости", "Управляет системой умного дома через мобильное приложение")
+
+System(mobile_app, "Mobile app PropDevelopment", "Приложение для управления умным домом")
+System(prop_system, "PropDevelopment server", "Центральная платформа управления")
+
+System_Ext(smart_intercom, "Умный домофон", "Видеодомофон с функцией распознавания лиц и удаленного открытия")
+System_Ext(smart_barrier, "Умный шлагбаум", "Автоматический шлагбаум с распознаванием номерных знаков")
+System_Ext(partner_service, "Сервис партнера", "Внешний API для интеграции с IoT устройствами")
+
+Rel(resident, mobile_app, "Взаимодействие", "REST API/HTTPS")
+
+Rel(mobile_app, prop_system, "Отправка команд", "JSON/HTTPS")
+Rel(prop_system, partner_service, "Интеграция", "REST API/OAuth2.0")
+Rel(partner_service, smart_intercom, "Управление", "IoT Protocol")
+Rel(partner_service, smart_barrier, "Управление", "IoT Protocol")
+
+@enduml
