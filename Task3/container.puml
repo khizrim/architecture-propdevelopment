@@ -1,0 +1,35 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Container.puml
+
+System_Boundary(prop, "PropDevelopment") {
+
+  Container(tenantApp,   "Tenant Mobile App", "Flutter",
+           "UI: ЖКУ, заявки, Smart-Home")
+  Container(tenantCore,  "Tenant-Core API", "Spring Boot",
+           "Бизнес-логика приложений собственника")
+  ContainerDb(tenantDB,  "tenant-core-db", "PostgreSQL",
+           "Данные собственников, устройств, заявок")
+
+  'Новый контейнер'
+  Container(smartGateway, "Smart-Home Gateway", "Spring Boot + Keycloak Adapter",
+           "Адаптер для Smart-Home Platform.\nМаршрутизация, кеш устройств, запись событий.")
+
+  ContainerDb(deviceCache, "smart-home-cache", "Redis",
+           "Текущие состояния устройств")
+
+  Container(analytics,  "DWH / BI", "Greenplum",
+           "Сырые и агрегированные данные устройств (CDC)")
+}
+
+System_Ext(smartPlatform, "Smart-Home Platform",
+           "REST API, MQTT",
+           "Домофон, шлагбаум (IoT)")
+
+Rel_L(tenantApp, tenantCore,  "REST + JWT")
+Rel_R(tenantCore, smartGateway, "REST + mTLS / OAuth 2 CC")
+Rel_D(smartGateway, smartPlatform, "REST / MQTT • JSON • TLS")
+Rel(smartGateway, deviceCache, "Cache (SET/GET)", "Redis TCP")
+Rel_Back(tenantCore, tenantDB, "JDBC")
+Rel_Back(smartGateway, analytics, "CDC → Kafka → DWH")
+
+@enduml

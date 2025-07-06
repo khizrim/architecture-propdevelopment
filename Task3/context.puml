@@ -1,0 +1,36 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+LAYOUT_WITH_LEGEND()
+
+Person(owner,       "Собственник", "Управляет жильём через мобильное приложение")
+Person(partnerOps,  "Smart-Home Ops", "Операторы партнёра (служба поддержки)")
+
+System_Boundary(prop, "PropDevelopment") {
+
+       System(tenantApp,          "Tenant Mobile App", "iOS / Android",
+       "Оплата ЖКУ, заявки, «Умный дом»")
+       System_Ext(tenantCore,     "Tenant-Core API",   "Spring Boot",
+       "Бэкенд мобильного приложения")
+
+       'Новый интеграционный слой'
+       System( smartGateway,
+       "Smart-Home Gateway",
+       "Spring Boot",
+       "Сервис-адаптер PropDevelopment ↔ Smart-Home Platform")
+}
+
+System_Ext(smartPlatform,
+"Smart-Home Platform",
+"Облачная IoT-платформа партнёра",
+"Домофон + Шлагбаум + другие IoT-сервисы")
+
+Rel(owner, tenantApp, "Использует", "TLS / HTTPS")
+Rel(tenantApp, tenantCore, "REST / JSON", "JWT")
+Rel(tenantCore, smartGateway, "REST / gRPC", "mTLS + OAuth 2 Client Creds")
+Rel(smartGateway, smartPlatform,
+"REST / MQTT over TLS  • OAuth 2 / JWT",
+"Команды, Web-hooks")
+
+Rel(partnerOps, smartPlatform, "Мониторинг / управление", "VPN")
+
+@enduml
